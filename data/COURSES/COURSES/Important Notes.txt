@@ -1,0 +1,18 @@
+====================================================================================================
+SECTION: Important Notes:
+COURSE: COURSES
+====================================================================================================
+
+1. Developer-Centric Focus:
+- Covers PySpark application development (coding, debugging, optimization).
+- Excludes: Cluster administration, infrastructure setup (YARN/K8s), or Spark cluster tuning.
+2. Machine Learning Scope:
+- Only introductory-level Spark ML (pipeline structure, basic concept).
+- Excludes: Advanced ML concepts (hyperparameter tuning, etc), DL frameworks, or MLOps.
+3. Language & Environment:
+- PySpark (Python API) only – Scala/Java/R APIs not covered.
+- Databricks usage focuses on developer work, not account/admin management.
+4. Kafka Integration:
+- Covers Spark-as-Consumer/Producer – not professional Kafka cluster setup, security, or Streams API.
+5. Infrastructure Assumptions:
+- All labs use local/standalone mode or Databricks Community Edition.

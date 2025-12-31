@@ -1,0 +1,12 @@
+====================================================================================================
+SECTION: Course Contents:
+PAGE: COURSES
+====================================================================================================
+
+Aptitude, Reasoning, English
+Computer Fundamentals & Concepts of Programming
+C Programming, C++
+Data Structure, Operating Systems
+Data Communication Networking
+Big Data, Al
+Computer Architecture, Digital Electronics, and Microprocessors

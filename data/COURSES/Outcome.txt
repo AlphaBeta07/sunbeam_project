@@ -1,0 +1,11 @@
+====================================================================================================
+SECTION: Outcome:
+PAGE: COURSES
+====================================================================================================
+
+Master PySpark DataFrames/SQL for batch & stream processing
+Build optimized pipelines using Catalyst insights
+Understand Spark job execution internals
+Understand Apache Kafka and Integrate with Spark
+Hands-on implementation of capstone project
+Certification-ready skills

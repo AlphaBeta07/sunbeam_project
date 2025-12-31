@@ -1,0 +1,14 @@
+streamlit
+langchain
+langchain-community
+langchain-openai
+langchain-text-splitters
+chromadb
+tiktoken
+python-dotenv
+requests
+pypdf
+unstructured
+beautifulsoup4
+lxml
+sentence-transformers

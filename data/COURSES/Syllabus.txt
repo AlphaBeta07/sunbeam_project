@@ -1,0 +1,63 @@
+====================================================================================================
+SECTION: Syllabus:
+PAGE: COURSES
+====================================================================================================
+
+Section 1: Spark Architecture & Internals
+- Distributed Computing Fundamentals
+- RDD lineage, DAG scheduler, lazy evaluation
+- Cluster managers overview
+- Spark 4.x Updates
+- Adaptive Query Execution (AQE) enhancements
+- Catalyst optimizer improvements
+- Performance Tuning
+- Joins
+- Partitioning, broadcast variables
+- Memory management
+Section 2: PySpark DataFrames & SQL
+- Data Manipulation
+- Complex types (JSON, arrays, maps)
+- Window functions, pivot tables, UDFs/Pandas UDFs
+- Spark SQL Deep Dive
+- Temp views, catalog API, Hive metastore integration
+- SQL syntax for Delta Lake operations
+- Execution Plans
+- Reading `explain()` output
+- Predicate pushdown, partition pruning
+Section 3: Incremental Data Processing & Apache Kafka
+- Structured Streaming
+- Event-time processing, watermarking, state management
+- Kafka integration (source/sink)
+- Delta Lake Essentials
+- ACID transactions
+- Schema evolution
+Section 4: Spark Optimizations
+- Catalyst Internals
+- Logical vs. physical plans
+- Custom optimization extensions
+- Performance Best Practices
+- File formats (Parquet/Delta)
+- Resource allocation (executors/cores)
+Section 5: Databricks Lakehouse Platform
+- Lakehouse fundamentals
+- Workspace Navigation
+- DBFS, clusters, notebooks
+- Delta Lake UI
+- Viewing table history/schema
+- Data Governance
+- Unity Catalog basics (no Admin tasks)
+Section 6: Apache Kafka Fundamentals
+- Architecture
+- Brokers, topics, partitions, consumer groups
+- Spark-Kafka Integration
+- Structured Streaming with Kafka
+- Job execution
+Section 7: Spark ML Introduction
+- MLlib Workflow
+- Transformers vs. estimators, pipelines
+- Feature engineering (VectorAssembler, StringIndexer)
+- Model Training
+- Regression demo (no hyperparameter tuning)
+Section 8: Capstone Project
+- Pipeline implementation
+- Domain Examples: IoT monitoring, retail analytics
