@@ -1,0 +1,8 @@
+====================================================================================================
+SECTION: Prerequisites:
+COURSE: COURSES
+====================================================================================================
+
+1. Python: Language Fundamentals, Functions, Collections, Pandas, ...
+2. SQL: CRUD Operations, Group By, Joins, Analytical queries, …
+3.Good to have: Linux basics, Hadoop/Hive knowledge beneficial
