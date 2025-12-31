@@ -40,7 +40,7 @@ if "chat_sessions" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = []
 
-if st.sidebar.button("➕New Chat"):
+if st.sidebar.button("New Chat"):
     if st.session_state.current_chat:
         st.session_state.chat_sessions.append(st.session_state.current_chat)
     st.session_state.current_chat = []
