@@ -1,0 +1,12 @@
+====================================================================================================
+SECTION: Important Note:
+COURSE: COURSES
+====================================================================================================
+
+Course does not cover the following:
+Python Programming Syntax, even though entire ML programming will be done in Python. (Join prerequisite course : python-development)
+Statistics behind ML algorithms, however foundations of descriptive & inferential statistics are covered exclusively (Refer syllabus).
+Web technologies, however serving ML model in the web application is covered.
+Python Programming Syntax, even though entire ML programming will be done in Python. (Join prerequisite course : python-development)
+Statistics behind ML algorithms, however foundations of descriptive & inferential statistics are covered exclusively (Refer syllabus).
+Web technologies, however serving ML model in the web application is covered.

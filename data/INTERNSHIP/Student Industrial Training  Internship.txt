@@ -1,0 +1,27 @@
+====================================================================================================
+SECTION: Student Industrial Training & Internship
+PAGE: INTERNSHIP
+====================================================================================================
+
+List of Internship Program
+Sr.No.
+Duration
+Structure
+Mode
+1
+1 Month
+1 month of comprehensive training
+Concurrent execution of a mini project
+Offline mode at Sunbeam campus
+2
+2 months
+Training sessions for relevant technologies
+Execution of 2 mini projects based on selected technology
+One mini project to be developed in offline mode at Sunbeam campus.
+One mini project to be developed in online mode.
+3
+6 months
+In-depth training program during the entire internship
+One mini project to be developed and one project to be developed with enhanced features based on specific technology.
+One mini project to be developed in offline mode at Sunbeam campus.
+One project to be developed with enhanced features based on specific technology in online mode.
