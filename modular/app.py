@@ -80,3 +80,33 @@ Rules:
 - Do not add external knowledge.
 """
 
+# --------------------------------------------------
+# 7. CHAT LOOP
+# --------------------------------------------------
+while True:
+    question = input("\nAsk a question (type 'exit' to quit): ")
+    if question.lower() == "exit":
+        break
+
+    question = question.replace("intership", "internship")
+
+    retrieved_docs = retriever.invoke(question)
+
+    context = "\n\n".join(
+        [doc.page_content for doc in retrieved_docs]
+    )
+
+    prompt = f"""
+{SYSTEM_PROMPT}
+
+Context:
+{context}
+
+Question:
+{question}
+
+Answer:
+"""
+
+    response = llm.invoke(prompt)
+    print("\nAnswer:\n", response.content)
