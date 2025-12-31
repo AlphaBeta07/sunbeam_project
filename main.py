@@ -6,41 +6,57 @@ from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import init_chat_model
 
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Sunbeam Chatbot", layout="centered")
 
+# ---------------- HEADER ----------------
 col1, col2, col3 = st.columns([1,2,1])
 with col2:
-    st.image("logo.png", width=160)
+    st.image("logo.png", width=180)
+st.title("Sunbeam Chatbot")
 
-st.markdown("### Sunbeam Chatbot")
-
+# ---------------- VECTOR DB ----------------
 @st.cache_resource
 def load_vectordb():
-    loader = DirectoryLoader("data", "**/*.txt", TextLoader)
-    docs = loader.load()
+    loader = DirectoryLoader(
+        path="data",
+        glob="**/*.txt",
+        loader_cls=TextLoader
+    )
+    documents = loader.load()
 
-    docs = [
-        d for d in docs
-        if len(d.page_content.strip()) > 200
-        and not d.page_content.isupper()
-        and d.page_content.count(" ") > 40
-    ]
+    def is_meaningful_document(text: str) -> bool:
+        text = text.strip()
+        if len(text) < 200:
+            return False
+        if text.isupper():
+            return False
+        if text.count(" ") < 40:
+            return False
+        return True
 
-    embeddings = OpenAIEmbeddings(
+    docs = [d for d in documents if is_meaningful_document(d.page_content)]
+
+    embed_model = OpenAIEmbeddings(
         model="text-embedding-nomic-embed-text-v1.5",
         base_url="http://127.0.0.1:1234/v1",
         api_key="dummy",
         check_embedding_ctx_length=False
     )
 
-    return Chroma.from_documents(
-        docs,
-        embeddings,
-        persist_directory="chroma_db"
+    vectordb = Chroma.from_documents(
+        documents=docs,
+        embedding=embed_model,
+        persist_directory="chroma_db_no_chunking"
     )
+    return vectordb
 
 vectordb = load_vectordb()
-retriever = vectordb.as_retriever(search_kwargs={"k": 3})
+
+retriever = vectordb.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 3}
+)
 
 llm = init_chat_model(
     model="google/gemma-3n-e4b",
@@ -49,43 +65,44 @@ llm = init_chat_model(
     api_key="dummy"
 )
 
-if "chat" not in st.session_state:
-    st.session_state.chat = []
+# ---------------- SESSION ----------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-def typewriter(text, speed=0.02):
+# ---------------- QUICK QUESTIONS ----------------
+st.subheader("Quick questions")
+
+col1, col2, col3 = st.columns(3)
+clicked_pill = None
+
+if col1.button("What courses does Sunbeam offer?"):
+    clicked_pill = "What courses does Sunbeam offer?"
+
+if col2.button("Tell me about internships"):
+    clicked_pill = "Tell me about internships"
+
+if col3.button("Where is Sunbeam located?"):
+    clicked_pill = "Where is Sunbeam located?"
+
+# ---------------- CHAT HISTORY ----------------
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+
+# ---------------- TYPEWRITER EFFECT ----------------
+def typewriter_effect(text, speed=0.02):
     placeholder = st.empty()
     current = ""
     for word in text.split():
         current += word + " "
-        placeholder.markdown(current)
+        placeholder.write(current)
         time.sleep(speed)
 
+# ---------------- INPUT ----------------
+user_input = st.chat_input("Ask a question about Sunbeam Institute")
 
-st.subheader("Quick questions")
-
-pill = None
-c1, c2, c3 = st.columns(3)
-
-if c1.button("What courses does Sunbeam offer?"):
-    pill = "What courses does Sunbeam offer?"
-
-if c2.button("Tell me about internships"):
-    pill = "Tell me about internships"
-
-if c3.button("Where is Sunbeam located?"):
-    pill = "Where is Sunbeam located?"
-
-for msg in st.session_state.messages:
-    with st.chat_message(
-        msg["role"],
-        avatar="🧑" if msg["role"] == "user" else "🤖"
-    ):
-        st.markdown(msg["content"])
-
-user_input = st.chat_input("Type a message")
-
-if pill:
-    user_input = pill
+if clicked_pill:
+    user_input = clicked_pill
 
 # ---------------- CHAT FLOW ----------------
 if user_input:
@@ -95,10 +112,10 @@ if user_input:
         {"role": "user", "content": user_input}
     )
 
-    with st.chat_message("user", avatar="🧑"):
-        st.markdown(user_input)
+    with st.chat_message("user"):
+        st.write(user_input)
 
-    with st.chat_message("assistant", avatar="🤖"):
+    with st.chat_message("assistant"):
         with st.spinner("Typing..."):
             docs = retriever.invoke(user_input)
             context = "\n\n".join(d.page_content for d in docs)
@@ -120,10 +137,11 @@ if user_input:
 
                 Answer:
                 """
+
             response = llm.invoke(prompt)
             answer = response.content
 
-        typewriter(answer)
+        typewriter_effect(answer)
 
     st.session_state.messages.append(
         {"role": "assistant", "content": answer}
