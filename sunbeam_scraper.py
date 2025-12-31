@@ -1,164 +1,112 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time, os
+import os
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain.chat_models import init_chat_model
 
-# ================= HELPER =================
-def clean_name(text):
-    return "".join(c for c in text if c.isalnum() or c in (" ", "_", "-")).strip()
+# --------------------------------------------------
+# 1. LOAD DOCUMENTS (NO CHUNKING)
+# --------------------------------------------------
+loader = DirectoryLoader(
+    path="data",
+    glob="**/*.txt",
+    loader_cls=TextLoader
+)
 
-def write_table(out, table):
-    rows = table.find_elements(By.XPATH, ".//tr")
-    table_data = []
+documents = loader.load()
+print(f"Loaded {len(documents)} raw documents")
 
-    for row in rows:
-        cells = row.find_elements(By.XPATH, ".//th | .//td")
-        row_data = [cell.text.strip() for cell in cells]
-        if row_data:
-            table_data.append(row_data)
+# --------------------------------------------------
+# 2. FILTER LOW-QUALITY DOCUMENTS (CRITICAL)
+# --------------------------------------------------
+def is_meaningful_document(text: str) -> bool:
+    text = text.strip()
+    if len(text) < 200:
+        return False
+    if text.isupper():
+        return False
+    if text.count(" ") < 40:
+        return False
+    return True
 
-    if not table_data:
-        return
+docs = [d for d in documents if is_meaningful_document(d.page_content)]
+print(f"Kept {len(docs)} meaningful documents")
 
-    col_widths = [
-        max(len(row[i]) for row in table_data if i < len(row))
-        for i in range(len(table_data[0]))
-    ]
+# --------------------------------------------------
+# 3. EMBEDDINGS
+# --------------------------------------------------
+embed_model = OpenAIEmbeddings(
+    model="text-embedding-nomic-embed-text-v1.5",
+    base_url="http://127.0.0.1:1234/v1",
+    api_key="dummy",
+    check_embedding_ctx_length=False
+)
 
-    for row in table_data:
-        line = " | ".join(
-            row[i].ljust(col_widths[i]) for i in range(len(row))
-        )
-        out.write(line + "\n")
+# --------------------------------------------------
+# 4. VECTOR STORE (DOCUMENT-LEVEL)
+# --------------------------------------------------
+vectordb = Chroma.from_documents(
+    documents=docs,
+    embedding=embed_model,
+    persist_directory="chroma_db_no_chunking"
+)
 
-    out.write("-" * 100 + "\n")
+# --------------------------------------------------
+# 5. RETRIEVER (SIMPLE SIMILARITY)
+# --------------------------------------------------
+retriever = vectordb.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 3}
+)
 
+# --------------------------------------------------
+# 6. LLM
+# --------------------------------------------------
+llm = init_chat_model(
+    model="google/gemma-3n-e4b",
+    model_provider="openai",
+    base_url="http://127.0.0.1:1234/v1",
+    api_key="dummy"
+)
 
-# ================= SETUP =================
-options = Options()
-options.add_argument("--headless")
-options.add_argument("--disable-gpu")
+SYSTEM_PROMPT = """
+You are a chatbot that answers questions using Sunbeam Institute website data.
 
-driver = webdriver.Chrome(options=options)
-wait = WebDriverWait(driver, 15)
+Rules:
+- Answer strictly from the given context.
+- If relevant information is available, summarize it clearly.
+- If information is not available, say:
+  "This information is not available on the Sunbeam website."
+- Do not add external knowledge.
+"""
 
-url = "https://www.sunbeaminfo.in/internship"
-print(f"Scraping: {url}")
+# --------------------------------------------------
+# 7. CHAT LOOP
+# --------------------------------------------------
+while True:
+    question = input("\nAsk a question (type 'exit' to quit): ")
+    if question.lower() == "exit":
+        break
 
-try:
-    driver.get(url)
-    time.sleep(3)
+    question = question.replace("intership", "internship")
 
-    # ================= PAGE HEADING =================
-    page_heading = driver.find_element(By.TAG_NAME, "h1").text.strip()
-    safe_page_heading = clean_name(page_heading)
+    retrieved_docs = retriever.invoke(question)
 
-    page_folder = os.path.join("data", safe_page_heading)
-    os.makedirs(page_folder, exist_ok=True)
-
-    # =================================================
-    # 1️⃣ PAGE CONTENT (TEXT + TABLES)
-    # =================================================
-    page_file = os.path.join(page_folder, f"{safe_page_heading}.txt")
-
-    with open(page_file, "w", encoding="utf-8") as out:
-        out.write("=" * 100 + "\n")
-        out.write(f"PAGE: {page_heading}\n")
-        out.write(f"URL: {url}\n")
-        out.write("=" * 100 + "\n\n")
-
-        # ---------- TEXT ----------
-        text_elements = driver.find_elements(
-            By.XPATH,
-            "//div[contains(@class,'container')]//h2 | "
-            "//div[contains(@class,'container')]//h3 | "
-            "//div[contains(@class,'container')]//p | "
-            "//div[contains(@class,'container')]//li"
-        )
-
-        seen = set()
-        for el in text_elements:
-            txt = el.text.strip()
-            if txt and txt not in seen:
-                seen.add(txt)
-                out.write(txt + "\n")
-
-        # ---------- TABLES ----------
-        tables = driver.find_elements(
-            By.XPATH,
-            "//div[contains(@class,'table-responsive')]//table"
-        )
-
-        for i, table in enumerate(tables, start=1):
-            out.write("\n" + "=" * 100 + "\n")
-            out.write(f"TABLE {i}\n")
-            out.write("=" * 100 + "\n")
-            write_table(out, table)
-
-    print(f"✅ Page content saved: {page_file}")
-
-    # =================================================
-    # 2️⃣ ACCORDION / BUTTON CONTENT (TEXT + TABLES)
-    # =================================================
-    accordion_links = driver.find_elements(
-        By.XPATH,
-        "//a[contains(@data-toggle,'collapse') and contains(@href,'#collapse')]"
+    context = "\n\n".join(
+        [doc.page_content for doc in retrieved_docs]
     )
 
-    for acc in accordion_links:
-        section_title = acc.text.strip()
-        if not section_title:
-            continue
+    prompt = f"""
+{SYSTEM_PROMPT}
 
-        safe_section = clean_name(section_title)
-        section_file = os.path.join(page_folder, f"{safe_section}.txt")
+Context:
+{context}
 
-        try:
-            collapse_id = acc.get_attribute("href").split("#")[-1]
+Question:
+{question}
 
-            driver.execute_script("arguments[0].scrollIntoView(true);", acc)
-            driver.execute_script("arguments[0].click();", acc)
+Answer:
+"""
 
-            panel = wait.until(
-                EC.visibility_of_element_located((By.ID, collapse_id))
-            )
-
-            time.sleep(1)
-
-            with open(section_file, "w", encoding="utf-8") as out:
-                out.write("=" * 100 + "\n")
-                out.write(f"SECTION: {section_title}\n")
-                out.write(f"PAGE: {page_heading}\n")
-                out.write("=" * 100 + "\n\n")
-
-                # ---- TEXT ----
-                items = panel.find_elements(By.XPATH, ".//p | .//li")
-                for item in items:
-                    txt = item.text.strip()
-                    if txt:
-                        out.write(txt + "\n")
-
-                # ---- TABLES ----
-                tables = panel.find_elements(
-                    By.XPATH,
-                    ".//div[contains(@class,'table-responsive')]//table"
-                )
-
-                for i, table in enumerate(tables, start=1):
-                    out.write("\n" + "=" * 80 + "\n")
-                    out.write(f"TABLE {i}\n")
-                    out.write("=" * 80 + "\n")
-                    write_table(out, table)
-
-            print(f"✅ Section saved: {section_file}")
-
-        except Exception as e:
-            print(f"❌ Section skipped: {section_title} | {e}")
-
-except Exception as e:
-    print(f"❌ Failed: {e}")
-
-driver.quit()
-print("\n🎉 SCRAPING COMPLETED SUCCESSFULLY")
+    response = llm.invoke(prompt)
+    print("\nAnswer:\n", response.content)
