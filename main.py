@@ -6,32 +6,14 @@ from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import init_chat_model
 
-# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Sunbeam Chatbot", layout="centered")
 
-st.markdown("""
-<style>
-/* User chat bubble */
-[data-testid="chat-message-user"] {
-    border-radius: 22px !important;
-    padding: 12px 16px !important;
-}
-
-/* Inner text container (important for rounding effect) */
-[data-testid="chat-message-user"] > div {
-    border-radius: 22px !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------------- HEADER ----------------
 col1, col2, col3 = st.columns([1, 1, 1])
 with col2:
     st.image("logo.png", width=180)
 
 st.title("Sunbeam Chatbot")
 
-# ---------------- SIDEBAR ----------------
 st.sidebar.title("Chat History")
 
 if "chat_sessions" not in st.session_state:
@@ -50,7 +32,6 @@ for i, chat in enumerate(st.session_state.chat_sessions):
     if st.sidebar.button(title[:30], key=f"chat_{i}"):
         st.session_state.current_chat = chat
 
-# ---------------- VECTOR DB ----------------
 @st.cache_resource
 def load_vectordb():
     loader = DirectoryLoader(
@@ -89,7 +70,6 @@ retriever = vectordb.as_retriever(
     search_kwargs={"k": 3}
 )
 
-# ---------------- LLM ----------------
 llm = init_chat_model(
     model="google/gemma-3n-e4b",
     model_provider="openai",
@@ -97,7 +77,6 @@ llm = init_chat_model(
     api_key="dummy"
 )
 
-# ---------------- PILLS ----------------
 st.subheader("Try asking:")
 pill_cols = st.columns(4)
 
@@ -112,7 +91,6 @@ for col, pill in zip(pill_cols, pills):
     if col.button(pill):
         clicked_pill = pill
 
-# ---------------- TYPEWRITER EFFECT ----------------
 def typewriter_effect(text, speed=0.025):
     placeholder = st.empty()
     out = ""
@@ -121,18 +99,15 @@ def typewriter_effect(text, speed=0.025):
         placeholder.markdown(out)
         time.sleep(speed)
 
-# ---------------- CHAT HISTORY ----------------
 for msg in st.session_state.current_chat:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# ---------------- USER INPUT ----------------
 user_input = st.chat_input("Ask anything...")
 
 if clicked_pill:
     user_input = clicked_pill
 
-# ---------------- CHAT LOGIC ----------------
 if user_input:
     user_input = user_input.replace("intership", "internship")
 
@@ -154,34 +129,34 @@ if user_input:
 
         if use_rag:
             prompt = f"""
-You are a chatbot that answers using Sunbeam Institute website data only.
+                You are a chatbot that answers using Sunbeam Institute website data only.
 
-Rules:
-- Answer strictly from the given context
-- Be clear and concise
-- Do not use external knowledge
+                Rules:
+                - Answer strictly from the given context
+                - Be clear and concise
+                - Do not use external knowledge
 
-Context:
-{context}
+                Context:
+                {context}
 
-Question:
-{user_input}
+                Question:
+                {user_input}
 
-Answer:
-"""
+                Answer:
+                """
         else:
             prompt = f"""
-You are a helpful general-purpose chatbot.
+                You are a helpful general-purpose chatbot.
 
-Rules:
-- Answer normally
-- Be polite and clear
+                Rules:
+                - Answer normally
+                - Be polite and clear
 
-Question:
-{user_input}
+                Question:
+                {user_input}
 
-Answer:
-"""
+                Answer:
+                """
 
         response = llm.invoke(prompt)
         answer = response.content
