@@ -8,7 +8,7 @@ from langchain.chat_models import init_chat_model
 # 1. LOAD DOCUMENTS
 # =========================
 loader = DirectoryLoader(
-    path=r"D:\Python\IIT-08-H-A-GENERATIVE-AI-94735\Project\data",
+    path=r"C:/Users/Anish/Desktop/sunbeam/sample/sunbeam_project/data",
     glob="**/*.txt",
     loader_cls=TextLoader
 )
