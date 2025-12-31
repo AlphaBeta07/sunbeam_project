@@ -32,7 +32,15 @@ def is_meaningful_document(text: str) -> bool:
 docs = [d for d in documents if is_meaningful_document(d.page_content)]
 print(f"Kept {len(docs)} meaningful documents")
 
-
+# --------------------------------------------------
+# 3. EMBEDDINGS
+# --------------------------------------------------
+embed_model = OpenAIEmbeddings(
+    model="text-embedding-nomic-embed-text-v1.5",
+    base_url="http://127.0.0.1:1234/v1",
+    api_key="dummy",
+    check_embedding_ctx_length=False
+)
 
 # --------------------------------------------------
 # 4. VECTOR STORE (DOCUMENT-LEVEL)
