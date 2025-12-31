@@ -6,7 +6,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
 
-# ===================== COURSE URLS =====================
 COURSE_URLS = [
     "https://www.sunbeaminfo.in/modular-courses/aptitude-course-in-pune",
     "https://www.sunbeaminfo.in/modular-courses/cpp-classes",
@@ -23,7 +22,6 @@ COURSE_URLS = [
     "https://www.sunbeaminfo.in/modular-courses/apache-spark-mastery-data-engineering-pyspark"
 ]
 
-# ===================== HELPERS =====================
 def clean_name(text):
     return "".join(c for c in text if c.isalnum() or c in (" ", "_", "-")).strip()
 
@@ -52,7 +50,6 @@ def write_table(out, table):
     out.write("-" * 100 + "\n")
 
 
-# ===================== SCRAPER FUNCTION =====================
 def scrape_course(driver, wait, url):
     print(f"\nScraping: {url}")
     driver.get(url)
@@ -72,7 +69,6 @@ def scrape_course(driver, wait, url):
         out.write(f"URL: {url}\n")
         out.write("=" * 100 + "\n\n")
 
-        # ---------- TEXT ----------
         text_elements = driver.find_elements(
             By.XPATH,
             "//div[contains(@class,'container')]//h2 | "
@@ -88,7 +84,6 @@ def scrape_course(driver, wait, url):
                 seen.add(txt)
                 out.write(txt + "\n")
 
-        # ---------- TABLES ----------
         tables = driver.find_elements(
             By.XPATH,
             "//div[contains(@class,'table-responsive')]//table"
@@ -102,7 +97,6 @@ def scrape_course(driver, wait, url):
 
     print(f"Main content saved: {main_file}")
 
-    # ---------- ACCORDIONS ----------
     accordion_links = driver.find_elements(
         By.XPATH,
         "//a[contains(@data-toggle,'collapse') and contains(@href,'#collapse')]"
@@ -155,8 +149,6 @@ def scrape_course(driver, wait, url):
         except Exception:
             print(f"Skipped section: {section_title}")
 
-
-# ===================== MAIN =====================
 if __name__ == "__main__":
     options = Options()
     options.add_argument("--headless")
