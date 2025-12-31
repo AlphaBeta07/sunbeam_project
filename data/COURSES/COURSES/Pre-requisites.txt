@@ -1,0 +1,8 @@
+====================================================================================================
+SECTION: Pre-requisites:
+COURSE: COURSES
+====================================================================================================
+
+Object Oriented Programming Concepts
+Any RDBMS (SQL)
+Web Programming Fundamentals (HTML, CSS, JS)
