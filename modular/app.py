@@ -4,7 +4,14 @@ from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import init_chat_model
 
-
+# --------------------------------------------------
+# 1. LOAD DOCUMENTS (NO CHUNKING)
+# --------------------------------------------------
+loader = DirectoryLoader(
+    path="data",
+    glob="**/*.txt",
+    loader_cls=TextLoader
+)
 
 documents = loader.load()
 print(f"Loaded {len(documents)} raw documents")
