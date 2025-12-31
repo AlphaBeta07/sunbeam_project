@@ -6,15 +6,13 @@ from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import init_chat_model
 import time
 
-# --------------------------------------------------
-# STREAMLIT CONFIG
-# --------------------------------------------------
 st.set_page_config(page_title="Sunbeam Chatbot", layout="centered")
+col1, col2, col3 = st.columns([1,2,1])
+with col2:
+    st.image("logo.png", width=180)
+
 st.title("Sunbeam Chatbot")
 
-# --------------------------------------------------
-# LOAD DOCUMENTS (NO CHUNKING)
-# --------------------------------------------------
 @st.cache_resource
 def load_vectordb():
     loader = DirectoryLoader(
@@ -59,9 +57,6 @@ retriever = vectordb.as_retriever(
     search_kwargs={"k": 3}
 )
 
-# --------------------------------------------------
-# LLM
-# --------------------------------------------------
 llm = init_chat_model(
     model="google/gemma-3n-e4b",
     model_provider="openai",
@@ -69,23 +64,16 @@ llm = init_chat_model(
     api_key="dummy"
 )
 
-# --------------------------------------------------
-# SESSION STATE
-# --------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --------------------------------------------------
-# PILLS (SUGGESTED QUESTIONS)
-# --------------------------------------------------
-st.write("### Try asking:")
+st.subheader("Try asking:")
 pill_cols = st.columns(4)
 
 pills = [
     "What courses does Sunbeam offer?",
     "Tell me about internships",
-    "Placement information",
-    "Admission process"
+    "Locat"
 ]
 
 clicked_pill = None
@@ -93,9 +81,6 @@ for col, pill in zip(pill_cols, pills):
     if col.button(pill):
         clicked_pill = pill
 
-# --------------------------------------------------
-# DISPLAY CHAT HISTORY
-# --------------------------------------------------
 def typewriter_effect(text, speed=0.03):
     placeholder = st.empty()
     displayed_text = ""
@@ -108,9 +93,6 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# --------------------------------------------------
-# INPUT
-# --------------------------------------------------
 user_input = st.chat_input("Ask a question about Sunbeam Institute")
 
 if clicked_pill:
@@ -140,7 +122,7 @@ if user_input:
         - Answer strictly from the given context.
         - If relevant information is available, summarize it clearly.
         - If information is not available, say:
-        "This information is not available on the Sunbeam website."
+        "Sorry, This information is not available."
         - Do not add external knowledge.
 
         Context:
