@@ -10,6 +10,10 @@ import time
 # STREAMLIT CONFIG
 # --------------------------------------------------
 st.set_page_config(page_title="Sunbeam Chatbot", layout="centered")
+col1, col2, col3 = st.columns([1,2,1])
+with col2:
+    st.image("logo.png", width=180)
+
 st.title("Sunbeam Chatbot")
 
 # --------------------------------------------------
@@ -78,14 +82,12 @@ if "messages" not in st.session_state:
 # --------------------------------------------------
 # PILLS (SUGGESTED QUESTIONS)
 # --------------------------------------------------
-st.write("### Try asking:")
+st.subheader("Try asking:")
 pill_cols = st.columns(4)
 
 pills = [
     "What courses does Sunbeam offer?",
-    "Tell me about internships",
-    "Placement information",
-    "Admission process"
+    "Tell me about internships"
 ]
 
 clicked_pill = None
