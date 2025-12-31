@@ -37,7 +37,7 @@ print(f"Kept {len(docs)} meaningful documents")
 # --------------------------------------------------
 embed_model = OpenAIEmbeddings(
     model="text-embedding-nomic-embed-text-v1.5",
-    base_url="http://127.0.0.1:1234/v1",
+    base_url="http://192.168.1.103:1234/v1",
     api_key="dummy",
     check_embedding_ctx_length=False
 )
@@ -65,7 +65,7 @@ retriever = vectordb.as_retriever(
 llm = init_chat_model(
     model="google/gemma-3n-e4b",
     model_provider="openai",
-    base_url="http://127.0.0.1:1234/v1",
+    base_url="http://192.168.1.103:1234/v1",
     api_key="dummy"
 )
 
