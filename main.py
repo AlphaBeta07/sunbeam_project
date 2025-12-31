@@ -16,21 +16,6 @@ loader = DirectoryLoader(
 documents = loader.load()
 print(f"Loaded {len(documents)} raw documents")
 
-# --------------------------------------------------
-# 2. FILTER LOW-QUALITY DOCUMENTS (CRITICAL)
-# --------------------------------------------------
-def is_meaningful_document(text: str) -> bool:
-    text = text.strip()
-    if len(text) < 200:
-        return False
-    if text.isupper():
-        return False
-    if text.count(" ") < 40:
-        return False
-    return True
-
-docs = [d for d in documents if is_meaningful_document(d.page_content)]
-print(f"Kept {len(docs)} meaningful documents")
 
 # --------------------------------------------------
 # 3. EMBEDDINGS
