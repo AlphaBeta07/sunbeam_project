@@ -22,7 +22,7 @@ if "chat_sessions" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = []
 
-if st.sidebar.button("➕ New Chat"):
+if st.sidebar.button("New Chat"):
     if st.session_state.current_chat:
         st.session_state.chat_sessions.append(st.session_state.current_chat)
     st.session_state.current_chat = []
@@ -131,24 +131,43 @@ if user_input:
             [doc.page_content for doc in retrieved_docs]
         )
 
-        prompt = f"""
-        You are a chatbot that answers questions using Sunbeam Institute website data.
+        # ---------- MODE DECISION ----------
+        use_rag = True
+        if not context or len(context.strip()) < 300:
+            use_rag = False
 
-        Rules:
-        - Answer strictly from the given context.
-        - If relevant information is available, summarize it clearly.
-        - If information is not available, say:
-        "Sorry, This information is not available."
-        - Do not add external knowledge.
+        if use_rag:
+            prompt = f"""
+            You are a chatbot that answers questions using Sunbeam Institute website data.
 
-        Context:
-        {context}
+            Rules:
+            - Answer strictly from the given context.
+            - If relevant information is available, summarize it clearly.
+            - Do not add external knowledge.
+            - Be clear and concise.
 
-        Question:
-        {user_input}
+            Context:
+            {context}
 
-        Answer:
-        """
+            Question:
+            {user_input}
+
+            Answer:
+            """
+        else:
+            prompt = f"""
+            You are a helpful, friendly general-purpose AI chatbot.
+
+            Rules:
+            - Answer the user's question normally.
+            - Be clear, concise, and polite.
+            - No need to restrict to Sunbeam data.
+
+            Question:
+            {user_input}
+
+            Answer:
+            """
 
         response = llm.invoke(prompt)
         answer = response.content
