@@ -1,21 +1,18 @@
 import os
-import time
 import streamlit as st
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import init_chat_model
+import time
 
-# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Sunbeam Chatbot", layout="centered")
-
-# ---------------- HEADER ----------------
 col1, col2, col3 = st.columns([1,2,1])
 with col2:
     st.image("logo.png", width=180)
+
 st.title("Sunbeam Chatbot")
 
-# ---------------- VECTOR DB ----------------
 @st.cache_resource
 def load_vectordb():
     loader = DirectoryLoader(
@@ -23,6 +20,7 @@ def load_vectordb():
         glob="**/*.txt",
         loader_cls=TextLoader
     )
+
     documents = loader.load()
 
     def is_meaningful_document(text: str) -> bool:
@@ -49,6 +47,7 @@ def load_vectordb():
         embedding=embed_model,
         persist_directory="chroma_db_no_chunking"
     )
+
     return vectordb
 
 vectordb = load_vectordb()
@@ -65,46 +64,40 @@ llm = init_chat_model(
     api_key="dummy"
 )
 
-# ---------------- SESSION ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ---------------- QUICK QUESTIONS ----------------
-st.subheader("Quick questions")
+st.subheader("Try asking:")
+pill_cols = st.columns(4)
 
-col1, col2, col3 = st.columns(3)
+pills = [
+    "What courses does Sunbeam offer?",
+    "Tell me about internships",
+    "Locat"
+]
+
 clicked_pill = None
+for col, pill in zip(pill_cols, pills):
+    if col.button(pill):
+        clicked_pill = pill
 
-if col1.button("What courses does Sunbeam offer?"):
-    clicked_pill = "What courses does Sunbeam offer?"
+def typewriter_effect(text, speed=0.03):
+    placeholder = st.empty()
+    displayed_text = ""
+    for word in text.split(" "):
+        displayed_text += word + " "
+        placeholder.markdown(displayed_text)
+        time.sleep(speed)
 
-if col2.button("Tell me about internships"):
-    clicked_pill = "Tell me about internships"
-
-if col3.button("Where is Sunbeam located?"):
-    clicked_pill = "Where is Sunbeam located?"
-
-# ---------------- CHAT HISTORY ----------------
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# ---------------- TYPEWRITER EFFECT ----------------
-def typewriter_effect(text, speed=0.02):
-    placeholder = st.empty()
-    current = ""
-    for word in text.split():
-        current += word + " "
-        placeholder.write(current)
-        time.sleep(speed)
-
-# ---------------- INPUT ----------------
 user_input = st.chat_input("Ask a question about Sunbeam Institute")
 
 if clicked_pill:
     user_input = clicked_pill
 
-# ---------------- CHAT FLOW ----------------
 if user_input:
     user_input = user_input.replace("intership", "internship")
 
@@ -116,32 +109,35 @@ if user_input:
         st.write(user_input)
 
     with st.chat_message("assistant"):
-        with st.spinner("Typing..."):
-            docs = retriever.invoke(user_input)
-            context = "\n\n".join(d.page_content for d in docs)
+        retrieved_docs = retriever.invoke(user_input)
 
-            prompt = f"""
-                You are a chatbot that answers questions using Sunbeam Institute website data.
+        context = "\n\n".join(
+            [doc.page_content for doc in retrieved_docs]
+        )
 
-                Rules:
-                - Answer strictly from the given context.
-                - If information is missing, say:
-                "Sorry, This information is not available."
-                - Do not add external knowledge.
+        prompt = f"""
+        You are a chatbot that answers questions using Sunbeam Institute website data.
 
-                Context:
-                {context}
+        Rules:
+        - Answer strictly from the given context.
+        - If relevant information is available, summarize it clearly.
+        - If information is not available, say:
+        "Sorry, This information is not available."
+        - Do not add external knowledge.
 
-                Question:
-                {user_input}
+        Context:
+        {context}
 
-                Answer:
-                """
+        Question:
+        {user_input}
 
-            response = llm.invoke(prompt)
-            answer = response.content
+        Answer:
+        """
 
-        typewriter_effect(answer)
+        response = llm.invoke(prompt)
+        answer = response.content
+
+        typewriter_effect(answer, speed=0.025)
 
     st.session_state.messages.append(
         {"role": "assistant", "content": answer}
