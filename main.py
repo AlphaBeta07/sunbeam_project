@@ -22,7 +22,7 @@ if "chat_sessions" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = []
 
-if st.sidebar.button("➕ New Chat"):
+if st.sidebar.button("➕New Chat"):
     if st.session_state.current_chat:
         st.session_state.chat_sessions.append(st.session_state.current_chat)
     st.session_state.current_chat = []
@@ -91,17 +91,17 @@ for col, pill in zip(pill_cols, pills):
     if col.button(pill):
         clicked_pill = pill
 
-def typewriter_effect(text, speed=0.015):
+def typewriter_effect(text, speed=0.025):
     placeholder = st.empty()
     out = ""
-    for char in text:
-        out += char
+    for word in text.split():
+        out += word + " "
         placeholder.markdown(out)
         time.sleep(speed)
 
 for msg in st.session_state.current_chat:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.write(msg["content"])
 
 user_input = st.chat_input("Ask anything...")
 
@@ -116,7 +116,7 @@ if user_input:
     )
 
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.write(user_input)
 
     with st.chat_message("assistant"):
         retrieved_docs = retriever.invoke(user_input)
@@ -126,6 +126,7 @@ if user_input:
         )
 
         use_rag = bool(context and len(context.strip()) > 300)
+
         if use_rag:
             prompt = f"""
                 You are a chatbot that answers using Sunbeam Institute website data only.
