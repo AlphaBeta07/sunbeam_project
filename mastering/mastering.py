@@ -5,7 +5,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time, os
 
-# ================= HELPER =================
 def clean_name(text):
     return "".join(c for c in text if c.isalnum() or c in (" ", "_", "-")).strip()
 
@@ -36,7 +35,6 @@ def write_table(out, table):
     out.write("-" * 100 + "\n")
 
 
-# ================= SETUP =================
 options = Options()
 options.add_argument("--headless")
 options.add_argument("--disable-gpu")
@@ -51,16 +49,12 @@ try:
     driver.get(url)
     time.sleep(3)
 
-    # ================= PAGE HEADING =================
     page_heading = driver.find_element(By.TAG_NAME, "h1").text.strip()
     safe_page_heading = clean_name(page_heading)
 
     page_folder = os.path.join("data", safe_page_heading)
     os.makedirs(page_folder, exist_ok=True)
 
-    # =================================================
-    # 1️⃣ PAGE CONTENT (TEXT + TABLES)
-    # =================================================
     page_file = os.path.join(page_folder, f"{safe_page_heading}.txt")
 
     with open(page_file, "w", encoding="utf-8") as out:
@@ -69,7 +63,6 @@ try:
         out.write(f"URL: {url}\n")
         out.write("=" * 100 + "\n\n")
 
-        # ---------- TEXT ----------
         text_elements = driver.find_elements(
             By.XPATH,
             "//div[contains(@class,'container')]//h2 | "
@@ -85,7 +78,6 @@ try:
                 seen.add(txt)
                 out.write(txt + "\n")
 
-        # ---------- TABLES ----------
         tables = driver.find_elements(
             By.XPATH,
             "//div[contains(@class,'table-responsive')]//table"
@@ -97,11 +89,8 @@ try:
             out.write("=" * 100 + "\n")
             write_table(out, table)
 
-    print(f"✅ Page content saved: {page_file}")
+    print(f"Page content saved: {page_file}")
 
-    # =================================================
-    # 2️⃣ ACCORDION / BUTTON CONTENT (TEXT + TABLES)
-    # =================================================
     accordion_links = driver.find_elements(
         By.XPATH,
         "//a[contains(@data-toggle,'collapse') and contains(@href,'#collapse')]"
@@ -133,14 +122,13 @@ try:
                 out.write(f"PAGE: {page_heading}\n")
                 out.write("=" * 100 + "\n\n")
 
-                # ---- TEXT ----
                 items = panel.find_elements(By.XPATH, ".//p | .//li")
                 for item in items:
                     txt = item.text.strip()
                     if txt:
                         out.write(txt + "\n")
 
-                # ---- TABLES ----
+
                 tables = panel.find_elements(
                     By.XPATH,
                     ".//div[contains(@class,'table-responsive')]//table"
@@ -152,13 +140,13 @@ try:
                     out.write("=" * 80 + "\n")
                     write_table(out, table)
 
-            print(f"✅ Section saved: {section_file}")
+            print(f"Section saved: {section_file}")
 
         except Exception as e:
-            print(f"❌ Section skipped: {section_title} | {e}")
+            print(f"Section skipped: {section_title} | {e}")
 
 except Exception as e:
-    print(f"❌ Failed: {e}")
+    print(f"Failed: {e}")
 
 driver.quit()
-print("\n🎉 SCRAPING COMPLETED SUCCESSFULLY")
+print("\nSCRAPING COMPLETED SUCCESSFULLY")

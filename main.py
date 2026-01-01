@@ -22,7 +22,7 @@ if "chat_sessions" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = []
 
-if st.sidebar.button("➕New Chat"):
+if st.sidebar.button("➕ New Chat"):
     if st.session_state.current_chat:
         st.session_state.chat_sessions.append(st.session_state.current_chat)
     st.session_state.current_chat = []
@@ -81,6 +81,7 @@ st.subheader("Try asking:")
 pill_cols = st.columns(4)
 
 pills = [
+    "Tell me about sunbeam",
     "What courses does Sunbeam offer?",
     "Tell me about internships",
     "Location"
@@ -91,7 +92,7 @@ for col, pill in zip(pill_cols, pills):
     if col.button(pill):
         clicked_pill = pill
 
-def typewriter_effect(text, speed=0.025):
+def type_effect(text, speed=0.025):
     placeholder = st.empty()
     out = ""
     for word in text.split():
@@ -100,8 +101,13 @@ def typewriter_effect(text, speed=0.025):
         time.sleep(speed)
 
 for msg in st.session_state.current_chat:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    if msg["role"] == "assistant":
+        with st.chat_message("assistant", avatar="assistant_logo.png"):
+            st.write(msg["content"])
+    else:
+        with st.chat_message("user", avatar="user.png"):
+            st.write(msg["content"])
+
 
 user_input = st.chat_input("Ask anything...")
 
@@ -109,16 +115,15 @@ if clicked_pill:
     user_input = clicked_pill
 
 if user_input:
-    user_input = user_input.replace("intership", "internship")
 
     st.session_state.current_chat.append(
         {"role": "user", "content": user_input}
     )
 
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="user.png"):
         st.write(user_input)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="assistant_logo.png"):
         retrieved_docs = retriever.invoke(user_input)
 
         context = "\n\n".join(
@@ -129,39 +134,40 @@ if user_input:
 
         if use_rag:
             prompt = f"""
-                You are a chatbot that answers using Sunbeam Institute website data only.
+            You are a chatbot that answers using Sunbeam Institute website data only.
 
-                Rules:
-                - Answer strictly from the given context
-                - Be clear and concise
-                - Do not use external knowledge
+            Rules:
+            - Answer strictly from the given context
+            - Be clear and concise
+            - Do not use external knowledge
 
-                Context:
-                {context}
+            Context:
+            {context}
 
-                Question:
-                {user_input}
+            Question:
+            {user_input}
 
-                Answer:
-                """
+            Answer:
+            """
         else:
             prompt = f"""
-                You are a helpful general-purpose chatbot.
+            You are a helpful general-purpose chatbot.
 
-                Rules:
-                - Answer normally
-                - Be polite and clear
+            Rules:
+            - Answer normally
+            - Be polite and clear
 
-                Question:
-                {user_input}
+            Question:
+            {user_input}
 
-                Answer:
-                """
+            Answer:
+            """
 
         response = llm.invoke(prompt)
         answer = response.content
 
-        typewriter_effect(answer)
+        type_effect(answer)
+
 
     st.session_state.current_chat.append(
         {"role": "assistant", "content": answer}
