@@ -3,24 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
-import os
-
-COURSE_URLS = [
-    "https://www.sunbeaminfo.in/modular-courses/aptitude-course-in-pune",
-    "https://www.sunbeaminfo.in/modular-courses/cpp-classes",
-    "https://www.sunbeaminfo.in/modular-courses/core-java-classes",
-    "https://www.sunbeaminfo.in/modular-courses/data-structure-algorithms-using-java",
-    "https://www.sunbeaminfo.in/modular-courses/Devops-training-institute",
-    "https://www.sunbeaminfo.in/modular-courses/dreamllm-training-institute-pune",
-    "https://www.sunbeaminfo.in/modular-courses/machine-learning-classes",
-    "https://www.sunbeaminfo.in/modular-courses/mastering-generative-ai",
-    "https://www.sunbeaminfo.in/modular-courses.php?mdid=57",
-    "https://www.sunbeaminfo.in/modular-courses/mern-full-stack-developer-course",
-    "https://www.sunbeaminfo.in/modular-courses/mlops-llmops-training-institute-pune",
-    "https://www.sunbeaminfo.in/modular-courses/python-classes-in-pune",
-    "https://www.sunbeaminfo.in/modular-courses/apache-spark-mastery-data-engineering-pyspark"
-]
+import time, os
 
 def clean_name(text):
     return "".join(c for c in text if c.isalnum() or c in (" ", "_", "-")).strip()
@@ -31,7 +14,7 @@ def write_table(out, table):
 
     for row in rows:
         cells = row.find_elements(By.XPATH, ".//th | .//td")
-        row_data = [cell.text.strip() for cell in cells if cell.text.strip()]
+        row_data = [cell.text.strip() for cell in cells]
         if row_data:
             table_data.append(row_data)
 
@@ -44,33 +27,41 @@ def write_table(out, table):
     ]
 
     for row in table_data:
-        line = " | ".join(row[i].ljust(col_widths[i]) for i in range(len(row)))
+        line = " | ".join(
+            row[i].ljust(col_widths[i]) for i in range(len(row))
+        )
         out.write(line + "\n")
 
     out.write("-" * 100 + "\n")
 
 
-def scrape_course(driver, wait, url):
-    print(f"\nScraping: {url}")
->>>>>>> 3b97e1136d7729fac409e0c577f176937fccfab5
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--disable-gpu")
+
+driver = webdriver.Chrome(options=options)
+wait = WebDriverWait(driver, 15)
+
+url = "https://www.sunbeaminfo.in/internship"
+print(f"Scraping: {url}")
+
+try:
     driver.get(url)
     time.sleep(3)
 
     page_heading = driver.find_element(By.TAG_NAME, "h1").text.strip()
     safe_page_heading = clean_name(page_heading)
 
-    course_dir = os.path.join("data", "courses", safe_page_heading)
-    os.makedirs(course_dir, exist_ok=True)
+    page_folder = os.path.join("data", safe_page_heading)
+    os.makedirs(page_folder, exist_ok=True)
+    page_file = os.path.join(page_folder, f"{safe_page_heading}.txt")
 
-    main_file = os.path.join(course_dir, f"{safe_page_heading}.txt")
-
-    with open(main_file, "w", encoding="utf-8") as out:
+    with open(page_file, "w", encoding="utf-8") as out:
         out.write("=" * 100 + "\n")
-        out.write(f"COURSE: {page_heading}\n")
+        out.write(f"PAGE: {page_heading}\n")
         out.write(f"URL: {url}\n")
         out.write("=" * 100 + "\n\n")
 
-        # ---------- TEXT ----------
         text_elements = driver.find_elements(
             By.XPATH,
             "//div[contains(@class,'container')]//h2 | "
@@ -86,7 +77,6 @@ def scrape_course(driver, wait, url):
                 seen.add(txt)
                 out.write(txt + "\n")
 
-        # ---------- TABLES ----------
         tables = driver.find_elements(
             By.XPATH,
             "//div[contains(@class,'table-responsive')]//table"
@@ -98,13 +88,8 @@ def scrape_course(driver, wait, url):
             out.write("=" * 100 + "\n")
             write_table(out, table)
 
-<<<<<<< HEAD
-    print(f"✅ Main content saved: {main_file}")
-=======
-    print(f"Main content saved: {main_file}")
->>>>>>> 3b97e1136d7729fac409e0c577f176937fccfab5
+    print(f"Page content saved: {page_file}")
 
-    # ---------- ACCORDIONS ----------
     accordion_links = driver.find_elements(
         By.XPATH,
         "//a[contains(@data-toggle,'collapse') and contains(@href,'#collapse')]"
@@ -116,7 +101,7 @@ def scrape_course(driver, wait, url):
             continue
 
         safe_section = clean_name(section_title)
-        section_file = os.path.join(course_dir, f"{safe_section}.txt")
+        section_file = os.path.join(page_folder, f"{safe_section}.txt")
 
         try:
             collapse_id = acc.get_attribute("href").split("#")[-1]
@@ -127,12 +112,13 @@ def scrape_course(driver, wait, url):
             panel = wait.until(
                 EC.visibility_of_element_located((By.ID, collapse_id))
             )
+
             time.sleep(1)
 
             with open(section_file, "w", encoding="utf-8") as out:
                 out.write("=" * 100 + "\n")
                 out.write(f"SECTION: {section_title}\n")
-                out.write(f"COURSE: {page_heading}\n")
+                out.write(f"PAGE: {page_heading}\n")
                 out.write("=" * 100 + "\n\n")
 
                 items = panel.find_elements(By.XPATH, ".//p | .//li")
@@ -152,42 +138,13 @@ def scrape_course(driver, wait, url):
                     out.write("=" * 80 + "\n")
                     write_table(out, table)
 
-<<<<<<< HEAD
-            print(f"   ↳ Section saved: {safe_section}")
+            print(f"Section saved: {section_file}")
 
-        except Exception:
-            print(f"   ⚠ Skipped section: {section_title}")
-=======
-            print(f"Section saved: {safe_section}")
-
-        except Exception:
-            print(f"Skipped section: {section_title}")
->>>>>>> 3b97e1136d7729fac409e0c577f176937fccfab5
-
-
-# ===================== MAIN =====================
-if __name__ == "__main__":
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
-
-    driver = webdriver.Chrome(options=options)
-    wait = WebDriverWait(driver, 15)
-
-    os.makedirs("data/courses", exist_ok=True)
-
-    for course_url in COURSE_URLS:
-        try:
-            scrape_course(driver, wait, course_url)
         except Exception as e:
-<<<<<<< HEAD
-            print(f"❌ Failed: {course_url} | {e}")
+            print(f"Section skipped: {section_title} | {e}")
 
-    driver.quit()
-    print("\n🎉 ALL 13 COURSES SCRAPED SUCCESSFULLY")
-=======
-            print(f"Failed: {course_url} | {e}")
+except Exception as e:
+    print(f"Failed: {e}")
 
-    driver.quit()
-    print("\nALL 13 COURSES SCRAPED SUCCESSFULLY")
->>>>>>> 3b97e1136d7729fac409e0c577f176937fccfab5
+driver.quit()
+print("\nSCRAPING COMPLETED SUCCESSFULLY")

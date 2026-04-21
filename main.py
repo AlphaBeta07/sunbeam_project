@@ -1,14 +1,14 @@
 import os
+import time
 import streamlit as st
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
 from langchain.chat_models import init_chat_model
-import time
 
 st.set_page_config(page_title="Sunbeam Chatbot", layout="centered")
 
-col1, col2, col3 = st.columns([1,2,1])
+col1, col2, col3 = st.columns([1, 1, 1])
 with col2:
     st.image("logo.png", width=180)
 
@@ -22,14 +22,14 @@ if "chat_sessions" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = []
 
-if st.sidebar.button("New Chat"):
+if st.sidebar.button("+ New Chat"):
     if st.session_state.current_chat:
         st.session_state.chat_sessions.append(st.session_state.current_chat)
     st.session_state.current_chat = []
 
 for i, chat in enumerate(st.session_state.chat_sessions):
-    first_question = chat[0]["content"] if chat else f"Chat {i+1}"
-    if st.sidebar.button(first_question[:30], key=f"chat_{i}"):
+    title = chat[0]["content"] if chat else f"Chat {i+1}"
+    if st.sidebar.button(title[:30], key=f"chat_{i}"):
         st.session_state.current_chat = chat
 
 @st.cache_resource
@@ -42,17 +42,11 @@ def load_vectordb():
 
     documents = loader.load()
 
-    def is_meaningful_document(text: str) -> bool:
+    def is_meaningful(text):
         text = text.strip()
-        if len(text) < 200:
-            return False
-        if text.isupper():
-            return False
-        if text.count(" ") < 40:
-            return False
-        return True
+        return len(text) > 200 and not text.isupper() and text.count(" ") > 40
 
-    docs = [d for d in documents if is_meaningful_document(d.page_content)]
+    docs = [d for d in documents if is_meaningful(d.page_content)]
 
     embed_model = OpenAIEmbeddings(
         model="text-embedding-nomic-embed-text-v1.5",
@@ -87,6 +81,7 @@ st.subheader("Try asking:")
 pill_cols = st.columns(4)
 
 pills = [
+    "Tell me about sunbeam",
     "What courses does Sunbeam offer?",
     "Tell me about internships",
     "Location"
@@ -97,54 +92,54 @@ for col, pill in zip(pill_cols, pills):
     if col.button(pill):
         clicked_pill = pill
 
-def typewriter_effect(text, speed=0.03):
+def type_effect(text, speed=0.025):
     placeholder = st.empty()
-    displayed_text = ""
-    for word in text.split(" "):
-        displayed_text += word + " "
-        placeholder.markdown(displayed_text)
+    out = ""
+    for word in text.split():
+        out += word + " "
+        placeholder.markdown(out)
         time.sleep(speed)
 
 for msg in st.session_state.current_chat:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    if msg["role"] == "assistant":
+        with st.chat_message("assistant", avatar="assistant_logo.png"):
+            st.write(msg["content"])
+    else:
+        with st.chat_message("user", avatar="user.png"):
+            st.write(msg["content"])
 
-user_input = st.chat_input("Ask a question about Sunbeam Institute")
+
+user_input = st.chat_input("Ask anything...")
 
 if clicked_pill:
     user_input = clicked_pill
 
 if user_input:
-    user_input = user_input.replace("intership", "internship")
 
     st.session_state.current_chat.append(
         {"role": "user", "content": user_input}
     )
 
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="user.png"):
         st.write(user_input)
 
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="assistant_logo.png"):
         retrieved_docs = retriever.invoke(user_input)
 
         context = "\n\n".join(
             [doc.page_content for doc in retrieved_docs]
         )
 
-        # ---------- MODE DECISION ----------
-        use_rag = True
-        if not context or len(context.strip()) < 300:
-            use_rag = False
+        use_rag = bool(context and len(context.strip()) > 300)
 
         if use_rag:
             prompt = f"""
-            You are a chatbot that answers questions using Sunbeam Institute website data.
+            You are a chatbot that answers using Sunbeam Institute website data only.
 
             Rules:
-            - Answer strictly from the given context.
-            - If relevant information is available, summarize it clearly.
-            - Do not add external knowledge.
-            - Be clear and concise.
+            - Answer strictly from the given context
+            - Be clear and concise
+            - Do not use external knowledge
 
             Context:
             {context}
@@ -156,12 +151,11 @@ if user_input:
             """
         else:
             prompt = f"""
-            You are a helpful, friendly general-purpose AI chatbot.
+            You are a helpful general-purpose chatbot.
 
             Rules:
-            - Answer the user's question normally.
-            - Be clear, concise, and polite.
-            - No need to restrict to Sunbeam data.
+            - Answer normally
+            - Be polite and clear
 
             Question:
             {user_input}
@@ -172,7 +166,8 @@ if user_input:
         response = llm.invoke(prompt)
         answer = response.content
 
-        typewriter_effect(answer, speed=0.025)
+        type_effect(answer)
+
 
     st.session_state.current_chat.append(
         {"role": "assistant", "content": answer}
